@@ -98,7 +98,7 @@ onInstall:
 actions:
 
   setupReplication:
-    - if (/mariadb/.test("${nodes.sqldb.nodeType}")):
+    - if (/ash-mariadb/.test("${nodes.sqldb.nodeType}")):
         cmd[${this.id}]: |-
           yum install https://downloads.mysql.com/archives/get/file/mysql-connector-python-8.0.11-1.el7.x86_64.rpm -y &>> /var/log/run.log
           yum install https://downloads.mysql.com/archives/get/file/mysql-utilities-1.6.5-1.el7.noarch.rpm -y &>> /var/log/run.log
