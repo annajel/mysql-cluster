@@ -22,7 +22,6 @@ onAfterResetNodePassword[sqldb]:
 onInstall:
 
   if (nodes.proxy):
-    - cleanCluster
     - setupCluster
   if (!nodes.proxy):
     if (nodes.sqldb.length > 1): setupCluster
