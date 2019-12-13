@@ -131,7 +131,7 @@ actions:
             - install-jps:
                 jps: "${globals.scripts}/proxy-mgr-configuration.jps?_r=${fn.random}"
 
-      - if (/mariadb/.test("${nodes.sqldb.nodeType}")):
+      - if (/ash-mariadb/.test("${nodes.sqldb.nodeType}")):
         - if ('${settings.scheme}'.toLowerCase() == 'galera'):  
           - install-jps:
               jps: "${globals.scripts}/galera-configuration.jps?_r=${fn.random}"
