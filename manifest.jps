@@ -1,6 +1,7 @@
 jpsType: install
 jpsVersion: '1.5.2'
 name: ASH - MySQL/MariaDB Cluster
+id: mysql-auto-cluster
 
 categories:
   - apps/clustered-dbs
