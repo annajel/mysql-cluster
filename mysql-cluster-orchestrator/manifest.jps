@@ -1,6 +1,6 @@
 jpsType: install
 jpsVersion: '1.5.2'
-name: MySQL / MariaDB Cluster
+name: ASH - MySQL/MariaDB Cluster
 
 categories:
   - apps/clustered-dbs
@@ -12,20 +12,20 @@ description:
   short: A set of MySQL/MariaDB cluster topologies
   
 logo: /images/icon.png?_r=1
-baseUrl: https://raw.githubusercontent.com/jelastic-jps/mysql-cluster/master
+baseUrl: https://raw.githubusercontent.com/annajel/mysql-cluster/master
 
 settings:
   fields:
     - caption: Stack
       type: list
       name: stack
-      default: mysql
+      default: ash-mariadb
       required: true
       values:        
         - value: mysql
           caption: MySQL CE
-        - value: mariadb-dockerized
-          caption: MariaDB
+        - value: ash-mariadb
+          caption: ASH+MariaDB
       
     - caption: Topology
       type: list
@@ -43,7 +43,7 @@ settings:
               - value: multi
                 caption: Multi Group Replication              
 
-            mariadb-dockerized:    
+            ash-mariadb:    
               - value: slave
                 caption: Master-Slave with extra slaves
               - value: master
@@ -64,8 +64,8 @@ settings:
         stack:
             mysql:
               - value: mysql
-            mariadb-dockerized:    
-              - value: mariadb-dockerized
+            ash-mariadb:    
+              - value: ash-mariadb
 
     - caption: None
       inputType: hidden
