@@ -1,46 +1,92 @@
-jpsType: update
-id: mysql-auto-cluster
-name: Database Cluster
-description:
-  text: Ready-to-work scalable MySQL Cluster with master-slave asynchronous replication
-    and ProxySQL load balancer in front of it. Is supplied with embedded Orchestrator
-    GUI for convenient cluster management and provides even load distribution, slaves
-    healthcheck and autodiscovery of newly added DB nodes
-  short: Scalable MySQL cluster with ProxySQL for even load distribution
-baseUrl: https://raw.githubusercontent.com/annajel/mysql-cluster/master
-logo: https://raw.githubusercontent.com/annajel/mysql-cluster/master/images/mysql-logo.png
-globals:
-  logic_jps: ${baseUrl}/addons/auto-clustering/scripts/auto-cluster-logic.jps?_r=${fn.random}
-nodeGroupAlias:
-  ${targetNodes.nodeGroup}: sqldb
-onInstall:
-  script: |
-    var scheme = "${settings.scheme:}",
-        db_user = "${settings.db_user:}",
-        db_pass = "${settings.db_pass:}",
-        is_proxysql = "${settings.is_proxysql:}",
-        auto_cluster = "${settings.auto_cluster:}";
-    var resp = jelastic.env.control.GetContainerEnvVars("${env.envName}", session, ${nodes.sqldb.master.id});
-    if (resp.result != 0) return resp;
-    if (String(auto_cluster || resp.object.AUTO_CLUSTER).toLowerCase() == "false") return {result:0};
-    
-    scheme = scheme || resp.object.SCHEME || "slave";
-    db_user = db_user || resp.object.DB_USER || "jelastic-${fn.random}";
-    db_pass = db_pass || resp.object.DB_PASS || "${fn.password(20)}";
-    is_proxysql = is_proxysql || resp.object.IS_PROXYSQL || "false";
-    return {result:0, onAfterReturn:{setupReplica:{scheme:scheme, db_user:db_user, db_pass:db_pass, is_proxysql:is_proxysql}}}
-actions:
-  setupReplica:
-    install:
-      jps: ${globals.logic_jps}
-      envName: ${env.envName}
-      nodeGroup: sqldb
-      settings:
-        path: ${baseUrl}
-        scheme: ${this.scheme}
-        logic_jps: ${globals.logic_jps}
-        db_user: ${this.db_user}
-        db_pass: ${this.db_pass}
-        repl_user: repl-${fn.random}
-        repl_pass: ${fn.password(20)}
-        is_proxysql: ${this.is_proxysql}
+{
+    "jps": "https://raw.githubusercontent.com/jelastic-jps/mysql-cluster/master/addons/auto-clustering/auto-cluster.jps",
+    "defaultState": false,
+    "skipOnEnvInstall": true,
+    "nodeGroupData": {
+        "scalingMode": "STATELESS",
+        "skipNodeEmails": true,
+        "isResetServicePassword": "NODE",
+        "isRedeploySupport": false
+    },
+    "compatibleAddons": ["mysql-auto-cluster"],
+    "settings": {
+        "data": {
+            "scheme": "slave",
+            "is_proxysql": true
+        },
+        "fields": [{
+            "type": "list",
+            "caption": "Scheme",
+            "name": "scheme",
+            "values": [{
+                   "value": "master",
+                   "caption": "Master-Master",
+                   "tooltip": "<h3>Master-Master with Extra Slaves</h3>Pre-configured replication with two interconnected master databases. While horizontal scaling the cluster is extended with additional slave nodes. <img width='314' height='280' src='https://raw.githubusercontent.com/jelastic/icons/master/mariadb/tip-cluster-mm.svg?sanitize=true'>"
+               }, {
+                   "value": "slave",
+                   "caption": "Master-Slave",
+                   "tooltip": "<h3>Master-Slave with Extra Slaves</h3>Pre-configured replication with one master and one slave database. While horizontal scaling the cluster is extended with additional slaves. <img width='314' height='280' src='https://raw.githubusercontent.com/jelastic/icons/master/mariadb/tip-cluster-ms.svg?sanitize=true'>"
+               }, {
+                   "value": "galera",
+                   "caption": "Galera",
+                   "tooltip": "<h3>Galera Cluster</h3>All servers can accept updates even if being issued concurrently. <img width='314' height='280' src='https://raw.githubusercontent.com/jelastic/icons/master/mariadb/tip-cluster-gl.svg?sanitize=true'>"
+               }
+           ],
+           "tipParams": {"dismissDelay":600000,"anchor":"l","hideOnOver":false,"showDelay":0,"text":"LT_Tip_Cluster_MariaDB_%(value)"}
+        }, {
+            "type": "toggle",
+            "caption": "Add ProxySQL",
+            "name": "is_proxysql"
+        }]
+    },
+    "validation": {
+        "scalingMode": "STATELESS",
+        "rules": {
+            "scheme": {
+                "master": {
+                    "minCount": 2,
+                    "setGlobals": {
+                        "recCloudlets": 8
+                    }
+                },
+                "slave": {
+                    "minCount": 2,
+                     "setGlobals": {
+                        "recCloudlets": 8
+                    }
+                },
+                "galera": {
+                    "minCount": 3,
+                    "setGlobals": {
+                        "recCloudlets": 16
+                    }
+                }
+            },
+            "is_proxysql": {
+                "true": {
+                    "setGlobals": {
+                        "proxyCount": 2
+                    }
+                }
+            }  
+        }
+    },
+    "recommended": {
+        "cloudlets": "${globals.recCloudlets}"
+    },
+    "requires": [
+        "proxysql"
+    ],
+    "extraNodes": {
+        "nodeGroup": "proxy",
+        "nodeType": "proxysql",
+        "flexibleCloudlets": 8,
+        "displayName": "ProxySQL",
+        "count": "${globals.proxyCount:0}",
+        "validation": {
+            "minCount": 2,
+            "maxCount": 2
+        }
+    },
+    "description": "Automatic clusterization of the databases using the chosen scheme with pre-configured replication and auto-discovery of the nodes."
+}
